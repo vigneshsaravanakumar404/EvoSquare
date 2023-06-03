@@ -13,14 +13,13 @@ public class Main : MonoBehaviour
     public GameObject herbivore;
     public GameObject food;
 
-    List<int> energyLevels = new();
-    List<float> speeds = new();
-    List<float> sizes = new();
-    List<float> visions = new();
-    List<GameObject> herbivores = new();
-    List<GameObject> foods = new();
-
-    System.Random random = new();
+    List<int> energyLevels = new List<int>();
+    List<float> speeds = new List<float>();
+    List<float> sizes = new List<float>();
+    List<float> visions = new List<float>();
+    List<GameObject> herbivores = new List<GameObject>();
+    HashSet<Vector3> validPositions = new HashSet<Vector3>();
+    List<GameObject> foods = new List<GameObject>();
 
     void Start()
     {
@@ -32,21 +31,21 @@ public class Main : MonoBehaviour
             Vector3 herbivorePosition;
             Quaternion rotation = Quaternion.identity;
             Vector3 randomDirection = new Vector3(UnityEngine.Random.Range(-1f, 1f), 0f, UnityEngine.Random.Range(-1f, 1f));
-            float speed = (float)(random.NextDouble() * 2 + 4);
-            float vision = (float)(random.NextDouble() * 2 + 2);
-            float size = (float)(random.NextDouble() * 1 + 0.5);
+            float speed = UnityEngine.Random.Range(4f, 6f);
+            float vision = UnityEngine.Random.Range(2f, 4f);
+            float size = UnityEngine.Random.Range(0.5f, 1.5f);
 
             bool isValidPosition = false;
             int attemptCount = 0;
             do
             {
-                if (random.Next(2) == 0)
+                if (UnityEngine.Random.Range(0, 2) == 0)
                 {
-                    herbivorePosition = new Vector3(random.Next(-bound, bound + 1), size, (random.Next(0, 2) == 0 ? -1 : 1) * 45);
+                    herbivorePosition = new Vector3(UnityEngine.Random.Range(-bound, bound + 1), size, (UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * 45);
                 }
                 else
                 {
-                    herbivorePosition = new Vector3((random.Next(0, 2) == 0 ? -1 : 1) * 45, size, random.Next(-bound, bound + 1));
+                    herbivorePosition = new Vector3((UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * 45, size, UnityEngine.Random.Range(-bound, bound + 1));
                 }
 
                 isValidPosition = IsPositionValid(herbivorePosition, minimumDistance);
@@ -58,34 +57,27 @@ public class Main : MonoBehaviour
                     Debug.LogWarning("Failed to find a valid position for herbivore within the specified distance");
                     break;
                 }
-            }
-            while (!isValidPosition);
+            } while (!isValidPosition);
 
             // Create new herbivore with random speed/size/vision
             if (isValidPosition)
             {
                 GameObject temp = Instantiate(herbivore, herbivorePosition, rotation);
-                temp.AddComponent<Rigidbody>();
-                temp.GetComponent<Rigidbody>().useGravity = false;
-                temp.GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 1);
-                temp.GetComponent<Rigidbody>().velocity = randomDirection * speed;
-                temp.transform.rotation = Quaternion.LookRotation(temp.GetComponent<Rigidbody>().velocity, -Vector3.up);
-
-                // Rotate the herbivore by 90 degrees in the y-axis
-                temp.transform.rotation = Quaternion.Euler(90, 90, 90);
-
-                // Scale the size of the herbivore
+                Rigidbody rb = temp.AddComponent<Rigidbody>();
+                rb.useGravity = false;
+                rb.velocity = randomDirection * speed;
+                temp.transform.rotation = Quaternion.LookRotation(rb.velocity, Vector3.up);
+                temp.transform.rotation *= Quaternion.Euler(0, -90, 0);
                 temp.transform.localScale = new Vector3(size, size, size);
 
                 speeds.Add(speed);
                 visions.Add(vision);
                 sizes.Add(size);
                 herbivores.Add(temp);
+
+                validPositions.Add(herbivorePosition);
             }
-
         }
-
-
 
         // Randomly Spawn Food
         for (int x = 0; x < foodCount; x++)
@@ -95,16 +87,14 @@ public class Main : MonoBehaviour
 
             do
             {
-                foodPosition = new Vector3(random.Next(-bound, bound), 1, random.Next(-bound, bound));
-            }
-            while (foodPosition.x >= -12 && foodPosition.x <= 12 && foodPosition.z >= -12 && foodPosition.z <= 12);
+                foodPosition = new Vector3(UnityEngine.Random.Range(-bound, bound), 1, UnityEngine.Random.Range(-bound, bound));
+            } while (foodPosition.x >= -12 && foodPosition.x <= 12 && foodPosition.z >= -12 && foodPosition.z <= 12);
 
             GameObject foodObject = Instantiate(food, foodPosition, rotation);
             foods.Add(foodObject);
         }
     }
 
-    // Update is called once per frame
     private void Update()
     {
         foreach (GameObject herbivore in herbivores)
@@ -147,7 +137,6 @@ public class Main : MonoBehaviour
                         float herbivoreSpeed = speeds[herbivores.IndexOf(herbivore)];
                         rb.velocity = Vector3.ClampMagnitude(direction.normalized * herbivoreSpeed, herbivoreSpeed);
 
-
                         // Check if the herbivore has reached the food
                         if (Vector3.Distance(herbivore.transform.position, food.transform.position) < 0.2f)
                         {
@@ -167,7 +156,6 @@ public class Main : MonoBehaviour
             herbivore.transform.position += rb.velocity * Time.deltaTime;
         }
     }
-
 
     private void ReflectVelocity(Rigidbody rb)
     {
@@ -197,19 +185,17 @@ public class Main : MonoBehaviour
         }
     }
 
-
     bool IsPositionValid(Vector3 position, float minimumDistance)
     {
-        foreach (GameObject herbivore in herbivores)
+        foreach (Vector3 validPosition in validPositions)
         {
-            if (Vector3.Distance(herbivore.transform.position, position) < minimumDistance)
+            if (Vector3.Distance(validPosition, position) < minimumDistance)
             {
                 return false;
             }
         }
         return true;
     }
-
 }
 
 
