@@ -428,8 +428,12 @@ PrefabInstance:
       value: 90.02
       objectReference: {fileID: 0}
     - target: {fileID: -2021178655527167927, guid: de44bd451a877e3499f683e9a6c71ac7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2021178655527167927, guid: de44bd451a877e3499f683e9a6c71ac7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 47.765
+      value: 48
       objectReference: {fileID: 0}
     - target: {fileID: -2021178655527167927, guid: de44bd451a877e3499f683e9a6c71ac7, type: 3}
       propertyPath: m_LocalPosition.z
@@ -437,7 +441,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -1853094968961178454, guid: de44bd451a877e3499f683e9a6c71ac7, type: 3}
       propertyPath: field of view
-      value: 54.764046
+      value: 54.76405
       objectReference: {fileID: 0}
     - target: {fileID: -1853094968961178454, guid: de44bd451a877e3499f683e9a6c71ac7, type: 3}
       propertyPath: m_FocalLength
