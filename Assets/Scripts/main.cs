@@ -5,14 +5,15 @@ using System.Linq;
 public class Main : MonoBehaviour
 {
     // Initial Conditions
-    static int herbivoreCount = 20;
-    static int foodCount = 10;
-    float minimumDistance = 2.5f;
+    static int herbivoreCount = 45;
+    static int foodCount = 35;
+    
 
     // Game Environment
     int bound = 45;
     public GameObject herbivore;
     public GameObject food;
+    float minimumDistance = 2.5f;
 
     // Lists
     List<int> energyLevels = new List<int>();
@@ -187,7 +188,7 @@ public class Main : MonoBehaviour
         {
             for (int x = 0; x < herbivores.Count; x++)
             {
-                energyLevels[x]--;
+                energyLevels[x]--; // TODO change based on size, speed and vision
                 int energyLevel = energyLevels[x];
 
                 if (energyLevel < 0)
@@ -208,7 +209,7 @@ public class Main : MonoBehaviour
                 }
                 else if (energyLevel > 2)
                 {
-                    //TODO Reproduction Code 
+                    //TODO Reproduction/evoluion Code 
                 }
 
                 // Reset Simulation
@@ -362,6 +363,7 @@ public class Main : MonoBehaviour
     Make multiple waves happen (Time To do: High) [Reproduction, energy levels]
      - Set a delay between waves
      - Reproduction
+     - Evolution
      - Function relating energy cost and gain
     Change color based on the vision and the speed of the herbivore (Time To do: Medium)
     fix bounds again
@@ -370,10 +372,6 @@ public class Main : MonoBehaviour
 
     Integrate UI (Tejas)
     Integrate Graph (Aryan) 
-
-    Github readme
-    Demo video 
-    Slide presentation
 */
 
 
