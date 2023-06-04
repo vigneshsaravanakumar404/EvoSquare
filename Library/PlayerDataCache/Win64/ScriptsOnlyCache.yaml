@@ -1,7 +1,7 @@
 ScriptsOnlyBuild:
   usedScripts:
     Assembly-CSharp.dll:
-    - main
+    - Main
     Unity.Rider.Editor.dll:
     - Packages.Rider.Editor.UnitTesting.CallbackData
     UnityEditor.TestRunner.dll:
@@ -430,7 +430,7 @@ ScriptsOnlyBuild:
       Hash: d3d9e848499458340ae67cb7cb40c54a
     assemblyName: Assembly-CSharp
     namespaceName: 
-    className: main
+    className: Main
   - hash:
       serializedVersion: 2
       Hash: f6831ac80ec81c5d5b370c0ed0fee997

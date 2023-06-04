@@ -1,18 +1,20 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Main : MonoBehaviour
 {
     // Initial Conditions
-    static int herbivoreCount = 46;
-    static int foodCount = 1;
+    static int herbivoreCount = 20;
+    static int foodCount = 10;
+    float minimumDistance = 2.5f;
 
     // Game Environment
     int bound = 45;
-
     public GameObject herbivore;
     public GameObject food;
 
+    // Lists
     List<int> energyLevels = new List<int>();
     List<float> speeds = new List<float>();
     List<float> sizes = new List<float>();
@@ -23,8 +25,7 @@ public class Main : MonoBehaviour
 
     void Start()
     {
-        float minimumDistance = 2.5f; // Minimum distance between herbivores
-
+        
         for (int x = 0; x < herbivoreCount; x++)
         {
             // Variables
@@ -37,6 +38,7 @@ public class Main : MonoBehaviour
 
             bool isValidPosition = false;
             int attemptCount = 0;
+
             do
             {
                 if (UnityEngine.Random.Range(0, 2) == 0)
@@ -51,24 +53,35 @@ public class Main : MonoBehaviour
                 isValidPosition = IsPositionValid(herbivorePosition, minimumDistance);
 
                 attemptCount++;
-                // Had to put this in here because infinite loops make unity crash
+
+                // Infinite loop preventer
                 if (attemptCount >= 100)
                 {
                     Debug.LogWarning("Failed to find a valid position for herbivore within the specified distance");
-                    break;
+                    if (UnityEngine.Random.Range(0, 2) == 0)
+                    {
+                        herbivorePosition = new Vector3(UnityEngine.Random.Range(-bound, bound + 1), size, (UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * bound);
+                    }
+                    else
+                    {
+                        herbivorePosition = new Vector3((UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * bound, size, UnityEngine.Random.Range(-bound, bound + 1));
+                    }
+
+                    isValidPosition = true; // Mark the position as valid since it is on the edge
                 }
+
             } while (!isValidPosition);
 
             // Create new herbivore with random speed/size/vision
             if (isValidPosition)
             {
+                // Initialize New variables
                 GameObject temp = Instantiate(herbivore, herbivorePosition, rotation);
-
                 Renderer cubeRenderer = temp.transform.Find("Cube").GetComponent<Renderer>();
                 Color color = CalculateColor(speed, vision, size);
                 cubeRenderer.material.color = color;
 
-
+                // Calculations
                 Rigidbody rb = temp.AddComponent<Rigidbody>();
                 rb.useGravity = false;
                 rb.velocity = randomDirection * speed;
@@ -76,11 +89,12 @@ public class Main : MonoBehaviour
                 temp.transform.rotation *= Quaternion.Euler(0, -90, 0);
                 temp.transform.localScale = new Vector3(size, size, size);
 
+                // Storage
                 speeds.Add(speed);
                 visions.Add(vision);
                 sizes.Add(size);
                 herbivores.Add(temp);
-
+                energyLevels.Add(5);
                 validPositions.Add(herbivorePosition);
             }
         }
@@ -107,23 +121,18 @@ public class Main : MonoBehaviour
         {
             Rigidbody rb = herbivore.GetComponent<Rigidbody>();
 
-            // Calculate the current position of the herbivore
+            // Calculations
             Vector3 currentPosition = herbivore.transform.position;
-
-            // Move the herbivore in the current direction with the specified speed
             Vector3 newPosition = currentPosition + rb.velocity * Time.deltaTime;
 
-            // Check if the new position exceeds the boundaries or enters the restricted region
             if (newPosition.x < -46f || newPosition.x > 46 || newPosition.z < -46 || newPosition.z > 46 ||
                 (newPosition.x >= -13f && newPosition.x <= 13f && newPosition.z >= -13f && newPosition.z <= 13f))
             {
-                // Reflect the herbivore's velocity across the boundary
+  
                 ReflectVelocity(rb);
 
-                // Additional check for restricted region
                 if (newPosition.x >= -13f && newPosition.x <= 13f && newPosition.z >= -13f && newPosition.z <= 13f)
                 {
-                    // Reverse the herbivore's velocity to prevent entering the restricted region
                     rb.velocity = -rb.velocity;
                 }
             }
@@ -131,7 +140,7 @@ public class Main : MonoBehaviour
             // Check if the herbivore is close to any food objects
             if (foods.Count > 0)
             {
-                foreach (GameObject food in foods)
+                foreach (GameObject food in foods.ToList())
                 {
                     if (food != null && Vector3.Distance(herbivore.transform.position, food.transform.position) < visions[herbivores.IndexOf(herbivore)])
                     {
@@ -149,6 +158,13 @@ public class Main : MonoBehaviour
                             // Destroy the food
                             Destroy(food);
                             SetRandomDirection(rb);
+
+                            // Increase the energy level of the herbivore
+                            int herbivoreIndex = herbivores.IndexOf(herbivore);
+                            energyLevels[herbivoreIndex]++;
+
+                            // Remove the food from the list
+                            foods.Remove(food);
                         }
 
                         continue;
@@ -166,8 +182,117 @@ public class Main : MonoBehaviour
             Color color = CalculateColor(speeds[herbivores.IndexOf(herbivore)], visions[herbivores.IndexOf(herbivore)], sizes[herbivores.IndexOf(herbivore)]);
             cubeRenderer.material.color = color;
         }
+        
+        if (foods.Count == 0)
+        {
+            for (int x = 0; x < herbivores.Count; x++)
+            {
+                energyLevels[x]--;
+                int energyLevel = energyLevels[x];
+
+                if (energyLevel < 0)
+                {
+                    // Delete the herbivore at the xth index
+                    Destroy(herbivores[x]);
+
+                    // Remove the attributes from the respective lists
+                    energyLevels.RemoveAt(x);
+                    speeds.RemoveAt(x);
+                    visions.RemoveAt(x);
+                    sizes.RemoveAt(x);
+                    herbivores.RemoveAt(x);
+
+                    x--; // Decrement x since the herbivore at the current index is removed
+
+                    continue; // Skip the remaining code for this iteration
+                }
+                else if (energyLevel > 2)
+                {
+                    //TODO Reproduction Code 
+                }
+
+                // Reset Simulation
+                Vector3 herbivorePosition;
+                Quaternion rotation = Quaternion.identity;
+                Vector3 randomDirection = new Vector3(UnityEngine.Random.Range(-1f, 1f), 0f, UnityEngine.Random.Range(-1f, 1f)).normalized;
+                float speed = speeds[x];
+                float vision = visions[x];
+                float size = sizes[x];
+                bool isValidPosition = false;
+                int attemptCount = 0;
+
+                do
+                {
+                    if (UnityEngine.Random.Range(0, 2) == 0)
+                    {
+                        herbivorePosition = new Vector3(UnityEngine.Random.Range(-bound, bound + 1), size, (UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * 45);
+                    }
+                    else
+                    {
+                        herbivorePosition = new Vector3((UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * 45, size, UnityEngine.Random.Range(-bound, bound + 1));
+                    }
+
+                    isValidPosition = IsPositionValid(herbivorePosition, minimumDistance);
+                    attemptCount++;
+                    
+
+                    // Infinite loop preventer
+                    if (attemptCount >= 100)
+                    {
+                        Debug.LogWarning("Failed to find a valid position for herbivore within the specified distance");
+                        // Place the herbivore randomly on the edges
+                        if (UnityEngine.Random.Range(0, 2) == 0)
+                        {
+                            herbivorePosition = new Vector3(UnityEngine.Random.Range(-bound, bound + 1), size, (UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * bound);
+                        }
+                        else
+                        {
+                            herbivorePosition = new Vector3((UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1) * bound, size, UnityEngine.Random.Range(-bound, bound + 1));
+                        }
+
+                        isValidPosition = true;
+                    }
+
+                } while (!isValidPosition);
+
+                if (isValidPosition)
+                {
+                    herbivores[x].transform.position = herbivorePosition;
+                    herbivores[x].transform.rotation = rotation;
+                    Rigidbody rb = herbivores[x].GetComponent<Rigidbody>();
+                    rb.velocity = randomDirection * speed;
+                    herbivores[x].transform.rotation = Quaternion.LookRotation(rb.velocity, Vector3.up);
+                    herbivores[x].transform.rotation *= Quaternion.Euler(0, -90, 0);
+                    herbivores[x].transform.localScale = new Vector3(size, size, size);
+
+                    // Update the valid positions set
+                    validPositions.Remove(herbivorePosition);
+                    validPositions.Add(herbivorePosition);
+                }
+            }
+
+            // Randomly Spawn Food
+            for (int x = 0; x < foodCount; x++)
+            {
+                Vector3 foodPosition;
+                Quaternion rotation = Quaternion.Euler(-90, 0, 0);
+
+                do
+                {
+                    foodPosition = new Vector3(UnityEngine.Random.Range(-bound, bound), 1, UnityEngine.Random.Range(-bound, bound));
+                } while (foodPosition.x >= -12 && foodPosition.x <= 12 && foodPosition.z >= -12 && foodPosition.z <= 12);
+
+                GameObject foodObject = Instantiate(food, foodPosition, rotation);
+                foods.Add(foodObject);
+            }
+
+            
+
+        }
+
     }
 
+    // Bounce off walls and pond
     private void ReflectVelocity(Rigidbody rb)
     {
         // Reflect the herbivore's velocity across the boundary
@@ -182,6 +307,7 @@ public class Main : MonoBehaviour
         }
     }
 
+    // Set random direction
     private void SetRandomDirection(Rigidbody rb)
     {
         // Set a random velocity direction for the herbivore
@@ -196,6 +322,7 @@ public class Main : MonoBehaviour
         }
     }
 
+    // Check valid positions
     bool IsPositionValid(Vector3 position, float minimumDistance)
     {
         foreach (Vector3 validPosition in validPositions)
@@ -208,6 +335,7 @@ public class Main : MonoBehaviour
         return true;
     }
 
+    // Calculate the color
     Color CalculateColor(float speed, float vision, float size)
     {
         // Find the maximum and minimum values of speed, vision, and size
@@ -231,34 +359,38 @@ public class Main : MonoBehaviour
 
 
 /* To dos:
+    Make multiple waves happen (Time To do: High) [Reproduction, energy levels]
+     - Set a delay between waves
+     - Reproduction
+     - Function relating energy cost and gain
+    Change color based on the vision and the speed of the herbivore (Time To do: Medium)
+    fix bounds again
+    Turn constants into variables (average initial Speed, average initial size, average initial vision) so it can 
+        be changed in the UI
 
-Make multiple waves happen (Time To do: High) [Reproduction, death, energy levels]
-Change color based on the vision and the speed of the herbivore (Time To do: Medium)
+    Integrate UI (Tejas)
+    Integrate Graph (Aryan) 
 
-Integrate UI (Tejas)
-Integrate Graph (Aryan) 
-
-
-Github readme
-Demo video 
-Slide presentation
+    Github readme
+    Demo video 
+    Slide presentation
 */
 
 
 /* Potential Extras
-
-Animations when turing
-Particles when eating
-Animations when eating
-Water
-Eating other cubes
-Strength
-Improve scene where there are more trees cause the camera can still see blank stuff
-sky
-camera rotaes around the clearning 
-camera can be moved by the user 
-Generate a file output that can be viwed
-Make the cubes blink
-Make the day and night cycle change
-
+    Make many attributes and let the user choose 3 out of the x attribues (I think this will be hard)
+    Animations when turing
+    Particles when eating
+    Animations when eating
+    Water
+    Eating other cubes
+    Strength
+    Improve scene where there are more trees cause the camera can still see blank stuff
+    sky
+    camera rotaes around the clearning 
+    camera can be moved by the user 
+    Generate a file output that can be viwed
+    Make the cubes blink
+    Make the day and night cycle change
+    sound effects
  */
