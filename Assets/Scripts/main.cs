@@ -51,7 +51,7 @@ public class Main : MonoBehaviour
                 isValidPosition = IsPositionValid(herbivorePosition, minimumDistance);
 
                 attemptCount++;
-                // Had to put this in here because infinite loops cause unity to crash
+                // Had to put this in here because infinite loops make unity crash
                 if (attemptCount >= 100)
                 {
                     Debug.LogWarning("Failed to find a valid position for herbivore within the specified distance");
@@ -63,6 +63,12 @@ public class Main : MonoBehaviour
             if (isValidPosition)
             {
                 GameObject temp = Instantiate(herbivore, herbivorePosition, rotation);
+
+                Renderer cubeRenderer = temp.transform.Find("Cube").GetComponent<Renderer>();
+                Color color = CalculateColor(speed, vision, size);
+                cubeRenderer.material.color = color;
+
+
                 Rigidbody rb = temp.AddComponent<Rigidbody>();
                 rb.useGravity = false;
                 rb.velocity = randomDirection * speed;
@@ -154,6 +160,11 @@ public class Main : MonoBehaviour
             herbivore.transform.rotation = Quaternion.LookRotation(rb.velocity, Vector3.up);
             herbivore.transform.rotation *= Quaternion.Euler(0, -90, 0);
             herbivore.transform.position += rb.velocity * Time.deltaTime;
+
+            // Update color based on attributes
+            Renderer cubeRenderer = herbivore.transform.Find("Cube").GetComponent<Renderer>();
+            Color color = CalculateColor(speeds[herbivores.IndexOf(herbivore)], visions[herbivores.IndexOf(herbivore)], sizes[herbivores.IndexOf(herbivore)]);
+            cubeRenderer.material.color = color;
         }
     }
 
@@ -196,6 +207,26 @@ public class Main : MonoBehaviour
         }
         return true;
     }
+
+    Color CalculateColor(float speed, float vision, float size)
+    {
+        // Find the maximum and minimum values of speed, vision, and size
+        float maxSpeed = Mathf.Max(speeds.ToArray());
+        float minSpeed = Mathf.Min(speeds.ToArray());
+        float maxVision = Mathf.Max(visions.ToArray());
+        float minVision = Mathf.Min(visions.ToArray());
+        float maxSize = Mathf.Max(sizes.ToArray());
+        float minSize = Mathf.Min(sizes.ToArray());
+
+        // Calculate normalized values for speed, vision, and size
+        float normalizedSpeed = (speed - minSpeed) / (maxSpeed - minSpeed);
+        float normalizedVision = (vision - minVision) / (maxVision - minVision);
+        float normalizedSize = (size - minSize) / (maxSize - minSize);
+
+        // Calculate the color based on the normalized attributes
+        Color color = new Color(normalizedSpeed, normalizedVision, normalizedSize);
+        return color;
+    }
 }
 
 
@@ -203,7 +234,6 @@ public class Main : MonoBehaviour
 
 Make multiple waves happen (Time To do: High) [Reproduction, death, energy levels]
 Change color based on the vision and the speed of the herbivore (Time To do: Medium)
-fix y-position so the object doesn't go through the ground (Time To do: Low)
 
 Integrate UI (Tejas)
 Integrate Graph (Aryan) 
@@ -228,5 +258,7 @@ sky
 camera rotaes around the clearning 
 camera can be moved by the user 
 Generate a file output that can be viwed
+Make the cubes blink
+Make the day and night cycle change
 
  */
