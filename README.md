@@ -16,6 +16,5 @@ Our submission for hackJPS. Won 2nd place and $3000+ dollars in prize money. Her
 
 
 # Demo Video
-![Demo](https://www.youtube.com/watch?v=HsrM2QJdQUA&ab_channel=IshaanSinha)
-[![Watch the video](](https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/002/497/842/datas/original.png)]([https://youtu.be/T-D1KVIuvjA](https://www.youtube.com/watch?v=HsrM2QJdQUA&ab_channel=IshaanSinha))
+https://www.youtube.com/watch?v=HsrM2QJdQUA&ab_channel=IshaanSinha
 
